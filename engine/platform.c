@@ -66,6 +66,11 @@ EMSCRIPTEN_KEEPALIVE void dg_mouse(int dx, int buttons) {
 }
 
 static unsigned char held_as[256]; /* what each raw key went down as, so it comes up the same */
+static int typed_raw;              /* the raw letter of the last key down, when it was turned into a movement key */
+
+int DG_TypedChar(int typed) {
+  return typed_raw ? typed_raw : typed;
+}
 
 int DG_GetKey(int *pressed, unsigned char *key) {
   if (keyq_read == keyq_write) return 0;
@@ -84,6 +89,7 @@ int DG_GetKey(int *pressed, unsigned char *key) {
       }
     }
     held_as[raw] = as;
+    typed_raw = as != raw ? raw : 0;
     *key = as;
   } else {
     *key = held_as[raw] ? held_as[raw] : (unsigned char)raw;

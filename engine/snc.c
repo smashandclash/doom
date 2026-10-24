@@ -354,10 +354,11 @@ static int small_wrap(surf_t *s, int x, int y, int w, const char *t, int c, int 
 
 /* A card drawn from its parts: the frame in the card's colour, the art, four value badges (red top, yellow right,
  * blue bottom, green left: the kit's badge colours). v[] is the values as they face the viewer: up right down left. */
-static void draw_badge(surf_t *s, int x, int y, int side, int value, int big, int rot) {
-  int w = big ? 9 : 7, h = big ? 11 : 9, k = big ? 2 : 1;
+/* size: 0 tiny (the wall screens), 1 board and hand, 2 preview */
+static void draw_badge(surf_t *s, int x, int y, int side, int value, int size, int rot) {
+  int w = size == 2 ? 9 : size ? 7 : 5, h = size == 2 ? 11 : size ? 9 : 7, k = size == 2 ? 2 : 1;
   fill(s, x, y, w, h, C_BADGE[side]);
-  frame_rect(s, x, y, w, h, C_INK);
+  if (size) frame_rect(s, x, y, w, h, C_INK); /* a tiny badge has no room for an outline round its digit */
   /* the 3x5 digit (twice as large on the preview); it stays upright on a card that faces the other way, since an
    * upside-down 6 reads as a 9 at this size */
   rot = 0;
@@ -392,10 +393,10 @@ static void draw_card(surf_t *s, int x, int y, int w, int h, int id, int effect,
   if (frozen) frame_rect(s, x + 2, y + 2, w - 4, h - 4, C_ICE);
   int big = size == 2, bw = big ? 9 : 7, bh = big ? 11 : 9;
   /* v[] faces the viewer; the badge colours stay with the printed sides, so they turn with the card */
-  draw_badge(s, x + (w - bw) / 2, y, rot ? 2 : 0, v[0], big, rot);
-  draw_badge(s, x + w - bw, y + (h - bh) / 2, rot ? 3 : 1, v[1], big, rot);
-  draw_badge(s, x + (w - bw) / 2, y + h - bh, rot ? 0 : 2, v[2], big, rot);
-  draw_badge(s, x, y + (h - bh) / 2, rot ? 1 : 3, v[3], big, rot);
+  draw_badge(s, x + (w - bw) / 2, y, rot ? 2 : 0, v[0], big ? 2 : 1, rot);
+  draw_badge(s, x + w - bw, y + (h - bh) / 2, rot ? 3 : 1, v[1], big ? 2 : 1, rot);
+  draw_badge(s, x + (w - bw) / 2, y + h - bh, rot ? 0 : 2, v[2], big ? 2 : 1, rot);
+  draw_badge(s, x, y + (h - bh) / 2, rot ? 1 : 3, v[3], big ? 2 : 1, rot);
 }
 
 /* ---------------------------------------------------------------- board geometry */
@@ -1578,10 +1579,35 @@ typedef struct {
 } screen_tex_t;
 
 static screen_tex_t walls[] = {
-  {"COMPUTE4", 4, 4, 248, 120}, {"COMPSTA1", 4, 3, 120, 64}, {"COMPSTA2", 4, 3, 120, 64}, {"COMPUTE1", 4, 4, 120, 44},
-  {"COMPUTE3", 4, 4, 120, 48}, {"COMP2", 4, 4, 120, 48}, {"AQCOMP01", 4, 4, 120, 60},
+  {"COMPUTE4", 4, 3, 248, 122}, {"COMPSTA1", 2, 2, 124, 124}, {"COMPSTA2", 2, 2, 124, 124}, {"COMPUTE1", 2, 2, 124, 124},
+  {"COMPUTE3", 2, 2, 124, 124}, {"COMP2", 4, 3, 248, 122}, {"AQCOMP01", 4, 3, 248, 122},
 };
 #define NWALLS ((int)(sizeof walls / sizeof walls[0]))
+
+/* A board card for the wall screens: the terminal's card at a smaller size, in the terminal's proportions (32x42),
+ * with its four values; their cards face them */
+static void draw_mini_card(surf_t *s, int x, int y, int w, int h, const bcell_t *b, const int v[4]) {
+  int cw = w, ch = h;
+  if (cw * 42 > ch * 32) cw = ch * 32 / 42;
+  else ch = cw * 42 / 32;
+  x += (w - cw) / 2, y += (h - ch) / 2;
+  int rot = !b->mine, bord = b->mine ? C_YOU : C_THEM;
+  /* no dark art panel: the wall's light level already darkens the screen in the world */
+  fill(s, x, y, cw, ch, b->frame);
+  frame_rect(s, x, y, cw, ch, bord);
+  frame_rect(s, x + 1, y + 1, cw - 2, ch - 2, bord);
+  int big = cw >= 24;
+  char name[9];
+  snprintf(name, sizeof name, big ? "SCS%02d" : "SCT%02d", b->id);
+  patch_t *art = patch(name);
+  if (art) draw_patch_x(s, x + (cw - SHORT(art->width)) / 2, y + (ch - SHORT(art->height)) / 2, art, b->frozen ? R_ICE : NULL, 1, rot);
+  if (b->frozen) frame_rect(s, x + 2, y + 2, cw - 4, ch - 4, C_ICE);
+  int bw = big ? 7 : 5, bh = big ? 9 : 7, bs = big ? 1 : 0;
+  draw_badge(s, x + (cw - bw) / 2, y, rot ? 2 : 0, v[0], bs, rot);
+  draw_badge(s, x + cw - bw, y + (ch - bh) / 2, rot ? 3 : 1, v[1], bs, rot);
+  draw_badge(s, x + (cw - bw) / 2, y + ch - bh, rot ? 0 : 2, v[2], bs, rot);
+  draw_badge(s, x, y + (ch - bh) / 2, rot ? 1 : 3, v[3], bs, rot);
+}
 
 static void draw_monitor(surf_t *s, int x0, int y0, int w, int h) {
   const snc_state_t *st = have_cur && cur.phase >= PH_WAITING ? &cur : tv.valid ? &tv : NULL;
@@ -1598,22 +1624,22 @@ static void draw_monitor(surf_t *s, int x0, int y0, int w, int h) {
   snprintf(head, sizeof head, "%s %d-%d %s", st == &tv ? "LIVE" : "YOU", st->score_me, st->score_opp, st->opp);
   head[(w - 4) / 4] = 0;
   small_text(s, x0 + 2, y0 + 2, head, C_GOLD);
-  int cw = (w - 4) / 5, ch = (h - 10) / 3;
-  int bx = x0 + (w - cw * 5) / 2, by = y0 + 8;
+  /* the terminal's board in miniature: cells in the terminal's proportions (40x44), cards with their four values */
+  int avail_w = w - 4, avail_h = h - 10;
+  int ch = avail_h / 3, cw = ch * 40 / 44;
+  if (cw * 5 > avail_w) cw = avail_w / 5, ch = cw * 44 / 40;
+  int bx = x0 + (w - cw * 5) / 2, by = y0 + 8 + (avail_h - ch * 3) / 2;
   for (int sr = 0; sr < 3; sr++)
     for (int sc = 0; sc < 5; sc++) {
       int cell = screen_to_cell(st, sr, sc);
       const bcell_t *b = &st->board[cell];
       int x = bx + sc * cw, y = by + sr * ch;
-      /* the bright you/them colours: the wall's light level darkens them in the world */
-      fill(s, x, y, cw, ch, b->id ? (b->mine ? C_YOU : C_THEM) : C_PANEL_LO);
-      frame_rect(s, x, y, cw, ch, b->id ? (b->mine ? C_YOU_HI : C_THEM_HI) : C_PANEL);
-      if (b->id) {
-        char name[9];
-        snprintf(name, sizeof name, cw >= 30 && ch >= 28 ? "SCS%02d" : "SCT%02d", b->id);
-        patch_t *art = patch(name);
-        if (art) draw_patch_x(s, x + (cw - SHORT(art->width)) / 2, y + (ch - SHORT(art->height)) / 2, art, b->frozen ? R_ICE : NULL, 1, !b->mine);
-      }
+      fill(s, x, y, cw, ch, C_PANEL);
+      frame_rect(s, x, y, cw, ch, C_PANEL_HI);
+      if (!b->id) continue;
+      int v[4];
+      facing(st, b, v);
+      draw_mini_card(s, x + 1, y + 1, cw - 2, ch - 2, b, v);
     }
 }
 
@@ -1686,7 +1712,7 @@ static void teleport_to_screen(void) {
     mo->momx = mo->momy = mo->momz = 0;
     players[consoleplayer].viewz = mo->z + players[consoleplayer].viewheight;
     S_StartSound(mo, sfx_telept);
-    hud_message("A SMASH&CLASH SCREEN: PRESS USE TO PLAY");
+    hud_message("WALK UP TO IT, PRESS USE");
     return;
   }
 }

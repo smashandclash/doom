@@ -31,7 +31,9 @@ const PATCHES = [
   ['m_menu.c', '    {1,"M_NGAME",M_NewGame,\'n\'},\n', '    {1,"M_NGAME",M_NewGame,\'n\'},\n    {1,"M_SNC",M_SmashClash,\'c\'},\n'],
   ['m_menu.c', 'void M_ClearMenus (void);\n', 'void M_ClearMenus (void);\nvoid M_SmashClash(int choice);\n'],
   ['p_map.c', 'boolean\tPTR_UseTraverse (intercept_t* in)\n{\n    int\t\tside;\n', 'boolean\tPTR_UseTraverse (intercept_t* in)\n{\n    int\t\tside;\n\n    if (SNC_UseLine (usething, in->d.line))\n\treturn false;               // a computer: the Smash&Clash terminal\n'],
-  ['r_data.c', '    col &= texturewidthmask[tex];\n', '    {\n\tbyte *snc = SNC_GetColumn (tex, col);   // the live board on the computer screens\n\tif (snc)\n\t    return snc;\n    }\n    col &= texturewidthmask[tex];\n'],
+  // the typed letter, not the movement key WASD were turned into, so cheats (iddqd, idkfa) still work
+  ['i_input.c', '            event.data2 = GetTypedChar(key);\n', '            event.data2 = DG_TypedChar (GetTypedChar(key));\n'],
+  ['r_data.c','    col &= texturewidthmask[tex];\n', '    {\n\tbyte *snc = SNC_GetColumn (tex, col);   // the live board on the computer screens\n\tif (snc)\n\t    return snc;\n    }\n    col &= texturewidthmask[tex];\n'],
 ];
 const APPEND = {
   'm_menu.c': '\n// The Smash&Clash terminal, from the main menu\nvoid M_SmashClash(int choice)\n{\n    M_ClearMenus ();\n    SNC_Open ();\n}\n',

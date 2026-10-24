@@ -15,5 +15,6 @@ void SNC_Ticker(void);                       /* once per game tic */
 void SNC_Drawer(void);                       /* after the view, before the menu */
 boolean SNC_UseLine(struct mobj_s *user, struct line_s *line); /* USE on a computer wall opens the terminal */
 byte *SNC_GetColumn(int tex, int col);       /* live board on the computer textures, or NULL */
+int DG_TypedChar(int typed);                 /* platform.c: the letter actually typed for the last key down */
 
 #endif

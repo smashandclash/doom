@@ -2,3 +2,6 @@ build/
 web/freedoom1.wad
 web/freedoom-COPYING.txt
 node_modules/
+
+.vercel
+.env*
