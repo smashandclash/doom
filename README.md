@@ -1,26 +1,45 @@
-# Can DOOM run Smash&Clash?
+<p align="center">
+  <img src="media/preview.gif" alt="Can DOOM run Smash&Clash? DOOM hosts a room from a computer in E1M1, a player on smashandclash.in joins, and they play the same game" width="760">
+</p>
 
-**Play it: [doom.smashandclash.in](https://doom.smashandclash.in)**
+<h1 align="center">Can DOOM run Smash&Clash?</h1>
 
-[It runs DOOM](https://en.wikipedia.org/wiki/It_runs_Doom) has been a meme for decades: anything with a processor and a
-screen ends up running the 1993 shooter. This goes the other way. DOOM is the client: the engine plays
-[Smash&Clash](https://www.smashandclash.in) online, against any player on any other Smash&Clash client.
+<p align="center">
+  <a href="https://doom.smashandclash.in">Play it in your browser</a> ·
+  <a href="https://docs.smashandclash.in/clients">One game, every client</a> ·
+  <a href="https://docs.smashandclash.in/sdk">SDK</a> ·
+  <a href="https://www.smashandclash.in">smashandclash.in</a>
+</p>
 
-- **DOOM draws the game.** The board, the cards and the menus are drawn into the engine's own 320x200, 256-colour screen.
-  The card art is baked into a PWAD in DOOM's palette, the text uses DOOM's HUD font, and the score uses the status-bar
-  numbers. Doomguy's face grins when you capture and winces when you're captured. Captures set off rocket explosions,
-  hops use the teleport fog, BOULDER is a BFG blast, and the sounds are DOOM's.
-- **The computers in the levels run it.** Every computer screen in E1M1 (COMPUTE4, COMPUTE1, COMPSTA1/2, COMP2,
-  AQCOMP01) shows the live board through the engine's wall-texture code. You see your own game, or the network's
-  featured live game when you aren't playing.
-- **It's a real client.** Walk up to a screen and press USE, or press `C`, or pick **SMASH&CLASH** in DOOM's main menu.
-  You can play the house, join the quick-match queue, create a room by code, join one, or watch a live game. Rooms and
-  the queue are the same ones the website, the apps, the CLI and agents use.
+<p align="center">
+  <b>Watch:</b>
+  <a href="https://github.com/smashandclash/doom/releases/download/v1.0.0/smashandclash-doom-launch-16x9.mp4">the launch film (16:9)</a>
+</p>
+
+![DOOM and smashandclash.in playing the same game of Smash&Clash](media/hero.jpg)
+
+"Can it run DOOM?" Yes, sure: calculators, pregnancy tests and potatoes all run DOOM ([canitrundoom.org](https://canitrundoom.org) lists 195 of them). This goes the other way. **DOOM runs Smash&Clash.**
+
+It's not an embed or a web page in a window. The DOOM engine is the client. The 1993 renderer draws the board, the cards and the menus into its own 320×200, 256-colour screen, with its own HUD font, status-bar face, sprites and sounds. Every computer screen in E1M1 shows a live game. And it plays on the same network as everyone else: the website, the apps, Telegram, Minecraft, GTA V, a Nintendo DS, the terminal and AI agents. Rooms, codes and quick match work across all of them.
+
+It's built on the [Smash&Clash SDK](https://docs.smashandclash.in/sdk).
+
+## Playing
+
+- **Get to the game:** walk up to any computer screen in a level and press **Use** (`Space` / `E`). You can also press **C** anywhere, or pick **SMASH&CLASH** in DOOM's main menu. **T** teleports you to the next computer screen on the level.
+- **Play the house** starts a game now, against an opponent at your level. **Quick match** joins the queue every Smash&Clash app shares (choose anyone, people or agents). **Create a room** makes a code anyone joins on any app, and **Join a room** takes theirs.
+- **While you play,** pick a card with the arrows (or `1`–`5`) and `Enter`, then a glowing tile. The mouse works too. `Tab` steps through every legal move by name, `R` resigns and `Esc` goes back to DOOM. The game waits on the network, so walk off and come back: the computers show where it stands, and the HUD tells you when it's your turn.
+- Mutators and Classic, your rating, and the Game Review's accuracy after each game. Captures go off as rocket explosions, hops use the teleport fog and a Boulder is a BFG blast. Doomguy grins when you take cards.
+- **Watch a live game** puts the network's featured game on the terminal. When you're not playing, the computer screens show it too.
+
+| | |
+| --- | --- |
+| ![The Smash&Clash lobby drawn by DOOM](media/lobby.png) | ![A game in DOOM's terminal](media/game.png) |
+| ![A computer screen in E1M1 showing the board](media/wall.png) | ![SMASH&CLASH in DOOM's main menu](media/menu.png) |
 
 ## How it works
 
-DOOM has no network, so the page runs [`@smashandclash/sdk`](https://docs.smashandclash.in/sdk) next to the engine,
-the same way the Smash&Clash GBA client carries its calls to a bridge.
+DOOM has no network, so the page runs `@smashandclash/sdk` next to the engine. The Smash&Clash GBA client does the same, carrying each call over a bridge.
 
 ```
  DOOM (doomgeneric, C -> WebAssembly)                  the page (JS)
@@ -30,47 +49,45 @@ the same way the Smash&Clash GBA client carries its calls to a bridge.
  └───────────────────────────────────┘ snc_js_send() └────────────────────────────┘
 ```
 
-- `bridge.js` reads the seat sync (`game.sync`), the legal moves as data (`game.view.moves`) and the deck
-  (`sc.cards()`), and hands the engine snapshots as tab-separated lines. The engine sends back commands: `play <move>`,
-  `house`, `quick`, `room`, `join <code>`, `watch`, `resign`, `leave`.
-- Moves are played by name from the network's legal moves, and the network resolves every one. The engine only sees what
-  a player at the table could: your hand, the board, and counts for the other hand.
-- The engine is [doomgeneric](https://github.com/ozkl/doomgeneric) at a pinned commit. `tools/build-wasm.mjs` adds
-  five small hooks: the event chain, the display, the main menu, the USE line check and the wall-texture column fetch.
+- `bridge.js` reads the seat sync (`game.sync`), the legal moves as data (`game.view.moves`) and the deck (`cards()`), and hands the engine snapshots as tab-separated lines. The engine sends back commands: `play <move>`, `house`, `quick`, `room`, `join <code>`, `watch`, `resign`, `leave`.
+- Moves are played by name from the network's legal moves, and the network decides every one. The engine only sees what a player at the table could: your hand, the board, and counts for the other hand.
+- The card art, the card back and the logo are baked into a PWAD (`smashandclash.wad`) in DOOM's own palette, so the engine draws them like any other graphic.
+- The engine is [doomgeneric](https://github.com/ozkl/doomgeneric) at a pinned commit. `tools/build-wasm.mjs` adds a few small hooks: the event chain, the display, the main menu, the USE line check, the wall-texture column fetch and the typed-character path (so cheats still work with WASD).
 
-It follows the [client checklist](https://docs.smashandclash.in/clients): it hosts by code, opens codes and
-`?join=` / `?game=&invite=` links through `games.open()`, uses the one quick-match queue and leaves it with `leave()`,
-and sends its name (`smashandclash-doom`), `as: 'person'` and the player's rating. You are blue and they are orange,
-and their cards face them, as at a real table. The opponent always has a name, never "CPU".
+It follows the [client checklist](https://docs.smashandclash.in/clients). It hosts by code and opens codes and `?join=` / `?game=&invite=` links through `games.open()`. It uses the one quick-match queue and leaves it with `leave()`. It sends its name (`smashandclash-doom`), `as: 'person'` and the player's rating. You are blue and they are orange, their cards face them as at a real table, and every opponent has a name.
 
-## Controls
+## Develop
 
-| Where | Keys |
-| - | - |
-| DOOM | `W` `A` `S` `D` or arrows, `Ctrl` fires, `Space`/`E` uses, click to aim with the mouse |
-| Anywhere | `C` opens the terminal; `T` teleports you to the next Smash&Clash screen on the level |
-| Terminal | arrows and `Enter` (or the mouse); `1`-`5` pick a card; `Tab` steps through every legal move by name; `R` resigns; `Esc` goes back to DOOM |
-
-## Build
-
-You need Node 20+, Python 3 with Pillow (WebP support), and Emscripten (`EMSDK` set).
+You need Node 20+, Python 3 with Pillow (WebP support) and Emscripten (`EMSDK` set).
 
 ```bash
-node tools/freedoom.mjs                 # Freedoom 0.13.0 -> web/freedoom1.wad (checksum-checked)
-node tools/fetch-deck.mjs               # the deck and the client kit, through the SDK
-python tools/bake.py web/freedoom1.wad build/deck.json web/smashandclash.wad
-node tools/build-wasm.mjs               # doomgeneric + engine/*.c -> web/doom.js, web/doom.wasm
-node tools/serve.mjs                    # http://localhost:8123/
+node tools/freedoom.mjs
 ```
 
-`?timer=1` drives the engine from `setTimeout` instead of `requestAnimationFrame`, for a page that is in the background
-(automated tests, a hidden preview).
+```bash
+node tools/fetch-deck.mjs
+python tools/bake.py web/freedoom1.wad build/deck.json web/smashandclash.wad
+```
 
-## Licences
+```bash
+node tools/build-wasm.mjs
+node tools/serve.mjs
+```
 
-- The engine and this repo's C code: GPL-2.0 (see `LICENSE`), like doomgeneric and the DOOM source.
-- `web/sdk/`: `@smashandclash/sdk`, MIT.
-- Game data: [Freedoom](https://freedoom.github.io/), BSD-3-Clause. It is downloaded at build time, not committed.
-- Smash&Clash, its name, characters, art and audio belong to Smash&Clash. They are used here as its
-  [client terms](https://docs.smashandclash.in/build/overview#using-the-art-and-audio) allow, in a client built for
-  Smash&Clash, with credit. They are not this project's own.
+`freedoom.mjs` downloads Freedoom 0.13.0 into `web/` (checksum-checked). `fetch-deck.mjs` reads the deck and the client kit through the SDK, and `bake.py` turns them into the PWAD. `build-wasm.mjs` compiles doomgeneric with `engine/*.c` into `web/doom.js` and `web/doom.wasm`, and `serve.mjs` serves `web/` at http://localhost:8123/. `?timer=1` drives the engine from `setTimeout` instead of `requestAnimationFrame`, for a page in the background (automated tests).
+
+| Part | Does |
+| --- | --- |
+| `engine/snc.c` | The client in DOOM: the terminal (lobby, board, hand, preview, result), picking a move, the animations with DOOM's sprites and sounds, the computer screens, USE and T |
+| `engine/platform.c` | DOOM's platform: frames to the canvas, keys and the mouse, sound effects through Web Audio |
+| `web/bridge.js` | The Smash&Clash side: runs the SDK, turns the seat sync into snapshots, plays the engine's commands |
+| `web/main.js` | The page: loads the WADs and the engine, input, sound, music, shared links |
+| `tools/` | Freedoom, the deck, the PWAD baker, the engine build and a dev server |
+
+## Licence
+
+The engine and this repo's C code are GPL-2.0, like doomgeneric and the DOOM source (see `LICENSE`). `web/sdk/` is `@smashandclash/sdk` (MIT). The game data is [Freedoom](https://freedoom.github.io/) (BSD-3-Clause); it's downloaded at build time, not committed.
+
+The characters, art, audio and the Smash&Clash name stay Smash&Clash's. They're free to use in clients built for Smash&Clash, never to present as your own ([terms](https://www.smashandclash.in/terms#developers)).
+
+DOOM is a trademark of id Software. This project uses the open-source engine and Freedoom's free game data, not id's. It isn't affiliated with or endorsed by id Software, Bethesda or ZeniMax. The project photos in the launch film are from [canitrundoom.org](https://canitrundoom.org).
