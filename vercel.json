@@ -1,0 +1,6 @@
+{
+  "buildCommand": "node tools/freedoom.mjs",
+  "outputDirectory": "web",
+  "installCommand": "",
+  "framework": null
+}
